@@ -134,42 +134,32 @@ function sendChatMessage() {
     getBotResponse(text);
 }
 
-async function getBotResponse(text) {
+function getBotResponse(text) {
     const botMsg = document.createElement('div');
     botMsg.className = 'bot-message';
-    // 로딩 인디케이터
-    botMsg.innerHTML = '<div style="display:flex; gap:4px; margin-top:5px;"><div style="width:6px;height:6px;background:#999;border-radius:50%;animation:blink 1.4s infinite both;"></div><div style="width:6px;height:6px;background:#999;border-radius:50%;animation:blink 1.4s infinite both;animation-delay:0.2s;"></div><div style="width:6px;height:6px;background:#999;border-radius:50%;animation:blink 1.4s infinite both;animation-delay:0.4s;"></div></div>';
-    
-    chatBody.appendChild(botMsg);
-    chatBody.scrollTop = chatBody.scrollHeight;
 
-    const prompt = `당신은 (주)비에이텍 웹사이트의 고객 응대용 친절한 AI 챗봇입니다.
-방문자의 질문: "${text}"
-친절하고 간결하게 답변해 주세요 (2~3문장 권장).
-참고 정보: 
-- 회사명: (주)비에이텍
-- 주소: 강원 춘천시 퇴계공단2길 64
-- 전화: 033-264-9243
-- 주요 제품: 다단볼루트펌프, 편흡입볼루트펌프, 수중펌프, 부스터펌프 등 산업용 펌프 제조.`;
-
-    try {
-        const res = await fetch('/.netlify/functions/gemini', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: prompt })
-        });
-        const data = await res.json();
-        
-        let resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || "죄송합니다. 오류가 발생했습니다. 자세한 문의는 033-264-9243으로 연락 주시면 안내해 드리겠습니다.";
-        // 간단한 줄바꿈 처리
-        botMsg.innerHTML = resultText.replace(/\n/g, '<br>');
-    } catch(err) {
-        botMsg.innerHTML = "통신 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+    if (text.includes("안녕") || text.includes("하이") || text.includes("반가워")) {
+        botMsg.innerText = "안녕하세요! (주) 비에이텍입니다. 무엇을 도와드릴까요?";
+    } else if (text.includes("펌프") || text.includes("제품") || text.includes("장비")) {
+        botMsg.innerText = "저희 비에이텍은 다단볼루트펌프, 편흡입볼루트펌프, 원심펌프 등 산업용 핵심 펌프를 전문 제조합니다. 상세 사양은 '장비소개' 메뉴를 확인해 주세요.";
+    } else if (text.includes("견적") || text.includes("가격") || text.includes("주문")) {
+        botMsg.innerText = "제품 견적 및 주문 문의는 033-264-9243으로 전화 주시거나, '고객문의' 메뉴를 통해 메시지를 남겨주시면 신속히 답변 드리겠습니다.";
+    } else if (text.includes("AS") || text.includes("수리") || text.includes("유지보수") || text.includes("관리")) {
+        botMsg.innerText = "비에이텍은 철저한 사후관리를 보장합니다. 수리 및 점검이 필요하시면 고객센터(033-264-9243)로 연락 부탁드립니다.";
+    } else if (text.includes("위치") || text.includes("어디") || text.includes("주소") || text.includes("공장")) {
+        botMsg.innerText = "본사 및 공장은 [강원 춘천시 퇴계공단2길 64]에 위치하고 있습니다. '오시는 길' 메뉴에서 지도를 확인하실 수 있습니다.";
+    } else if (text.includes("기술") || text.includes("특징") || text.includes("인증")) {
+        botMsg.innerText = "비에이텍은 20년 이상의 노하우와 ISO9001, KC인증, MAIN-BIZ 인증 등을 보유한 검증된 기술력을 자랑합니다.";
+    } else if (text.includes("연락처") || text.includes("전화") || text.includes("메일")) {
+        botMsg.innerText = "대표전화: 033-264-9243 / 이메일: info@batech.co.kr 입니다. 상담 시간은 평일 오전 9시부터 오후 6시까지입니다.";
+    } else {
+        botMsg.innerText = "죄송합니다. 질문하신 내용을 정확히 이해하지 못했습니다. 자세한 문의는 고객센터(033-264-9243)로 연락 주시면 상세히 안내해 드리겠습니다.";
     }
 
     setTimeout(() => {
+        chatBody.appendChild(botMsg);
         chatBody.scrollTop = chatBody.scrollHeight;
-    }, 100);
+    }, 600);
 }
 
 if(sendBtn) sendBtn.onclick = sendChatMessage;
@@ -429,173 +419,4 @@ if (track) {
         sliderWrapper.addEventListener('mouseleave', startAutoPlay);
     }
 }
-
-/*==================== INQUIRY STORAGE & FORM HANDLER ====================*/
-// Sample Inquiries Init
-const defaultInquiries = [
-    {
-        id: "inq_1717203600000",
-        type: "견적문의",
-        name: "(주)대하엔지니어링 / 김민준",
-        phone: "010-9876-5432",
-        email: "mj.kim@daehaeng.co.kr",
-        message: "하수처리장용 편흡입 볼루트 펌프 5대 견적 및 사양서 송부 부탁드립니다. 설치 조건은 강원도 춘천 인근 농공단지 시설입니다. 유량 및 양정 상세 사양은 메일로 추가로 전달드리겠습니다.",
-        date: "2026-05-30 11:24",
-        status: "대기중",
-        reply: ""
-    },
-    {
-        id: "inq_1717290000000",
-        type: "AS접수",
-        name: "삼척시 상하수도사업소 / 박동현 과장",
-        phone: "033-570-1234",
-        email: "dhpark@samcheok.go.kr",
-        message: "작년에 납품받은 부스터펌프 시스템 중 2호기 오작동으로 가동이 간헐적으로 중단되고 있습니다. 제어반 계기판에 E02 에러코드가 점멸되는데, 매뉴얼을 찾아보아도 해결 방안이 불확실하여 현장 점검 및 조치 방안 긴급 문의드립니다.",
-        date: "2026-05-31 15:40",
-        status: "대기중",
-        reply: ""
-    },
-    {
-        id: "inq_1717311600000",
-        type: "카탈로그요청",
-        name: "한빛설비 / 이서연 팀장",
-        phone: "010-4321-8765",
-        email: "sy.lee@hanbit.com",
-        message: "신축 주상복합 건물 지하 배수시설에 들어갈 수중펌프 및 슬러지펌프 라인업 전체 카탈로그와 상세 도면 자료(CAD 파일)가 필요합니다. 견적 검토용이오니 이메일로 빠르게 받아볼 수 있으면 감사하겠습니다.",
-        date: "2026-06-01 09:15",
-        status: "처리완료",
-        reply: "이서연 팀장님, 안녕하십니까. (주)비에이텍 기술지원부입니다. 요청하신 수중펌프 및 슬러지펌프 라인업이 수록된 종합 카탈로그와 정밀 CAD 도면 자료를 기재해주신 메일 주소(sy.lee@hanbit.com)로 발송해 드렸습니다. 당사 제품은 직접생산확인증명을 득한 조달 강점 제품이며 차후 A/S 등 신속한 사후관리를 보장합니다. 자료 검토 중 의문사항이나 상세 사양 변경 등이 필요하시면 언제든지 대표전화(033-264-9243)로 연락 부탁드립니다. 감사합니다."
-    }
-];
-
-if (!localStorage.getItem('batech_inquiries')) {
-    localStorage.setItem('batech_inquiries', JSON.stringify(defaultInquiries));
-}
-
-// ======= 자동 답변 발송 설정 (Google Apps Script & Netlify) =======
-// 프론트엔드 API 키는 삭제되었습니다. Netlify Function을 통해 통신합니다.
-
-// 발급받은 Google Apps Script Web App URL을 아래에 붙여넣어 주세요.
-const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx20h00ChCrOjqVL2lwi0gd4VlN8J5a_VB7SEbNY8Ke0-5_eV8aHEYQg69Y9QQKp8XB/exec';
-
-async function generateAutoReply(type, name, message) {
-    const prompt = `당신은 펌프 전문 제조업체 (주)비에이텍의 고객 응대 담당자입니다.
-아래 고객 문의에 대해 정중하고 전문적인 자동 답변 메일 본문을 작성해 주세요.
-반드시 HTML 코드로만 전체 이메일 구조를 작성해 주시고(마크다운 블록이나 부가 설명 없이 순수 <html> 코드만 출력), 다음 디자인 요소를 반영해 주세요:
-1. 전체 배경은 아주 옅은 회색(#f9fafb), 메인 콘텐츠 영역은 흰색(#ffffff), 중앙 정렬, 테두리는 둥글게(border-radius: 8px), 그림자 효과(box-shadow)를 넣으세요.
-2. 상단 헤더에는 파란색(#1a56db) 배경에 흰색 텍스트로 '(주) 비에이텍 고객지원팀'이라는 제목을 넣으세요.
-3. 본문 폰트는 깔끔한 돋움체나 맑은 고딕(sans-serif)을 사용하세요.
-4. 인사말: "${name}님, 안녕하세요. 비에이텍에 문의해 주셔서 감사합니다."
-5. 접수 내용 확인 박스 (회색 테두리와 옅은 배경): 문의 유형 [${type}], 접수 내용 요약을 표나 리스트 형태로 포함하세요.
-6. 메인 안내: 담당자가 내용을 검토 후 신속히 연락드릴 예정임을 친절하게 알리세요.
-7. 하단 푸터: 회색 배경(#f3f4f6), 중앙 정렬, 연락처 (Tel: 033-264-9243), 주소 (강원 춘천시 퇴계공단2길 64), 회사명 ((주)비에이텍)을 회색 텍스트(#6b7280)로 작게 넣으세요.
-
-[문의 유형] ${type}
-[고객명] ${name}
-[문의 내용] ${message}`;
-
-    const res = await fetch('/.netlify/functions/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompt })
-    });
-    const data = await res.json();
-    let resultHTML = data.candidates?.[0]?.content?.parts?.[0]?.text || '<p>문의해 주셔서 감사합니다. 담당자가 확인 후 빠르게 답변드리겠습니다.</p>';
-    // 마크다운 블록이 섞여 나올 경우 제거
-    resultHTML = resultHTML.replace(/```html\n?/g, '').replace(/```\n?/g, '').trim();
-    return resultHTML;
-}
-
-const contactForm = document.getElementById('contact-form');
-const contactStatus = document.getElementById('contact-status');
-
-if (contactForm) {
-    contactForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const type    = document.getElementById('inquiry_type').value;
-        const name    = document.getElementById('user_name').value;
-        const phone   = document.getElementById('user_phone').value;
-        const email   = document.getElementById('user_email').value;
-        const message = document.getElementById('user_message').value;
-        const agree   = document.getElementById('privacy_agree').checked;
-
-        if (!agree) {
-            if (contactStatus) {
-                contactStatus.textContent = '개인정보 수집 및 이용에 동의해야 합니다.';
-                contactStatus.className = 'contact__status error';
-            }
-            return;
-        }
-
-        // 버튼 비활성화 및 로딩 표시
-        const submitBtn = document.getElementById('contact-submit');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="ri-loader-4-line"></i> 처리 중...';
-
-        if (contactStatus) {
-            contactStatus.textContent = 'AI가 맞춤형 디자인 답변을 생성 중입니다...';
-            contactStatus.className = 'contact__status success';
-        }
-
-        // localStorage에 문의 저장
-        const now = new Date();
-        const formattedDate = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-        const newInquiry = { id: 'inq_' + now.getTime(), type, name, phone, email, message, date: formattedDate, status: '처리완료', reply: '' };
-
-        try {
-            const currentInquiries = JSON.parse(localStorage.getItem('batech_inquiries') || '[]');
-
-            // Gemini로 HTML 자동 답변 생성
-            const autoReply = await generateAutoReply(type, name, message);
-            newInquiry.reply = autoReply;
-            currentInquiries.push(newInquiry);
-            localStorage.setItem('batech_inquiries', JSON.stringify(currentInquiries));
-
-            // Google Apps Script를 통해 이메일 발송
-            if (GAS_WEB_APP_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
-                await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    // CORS 이슈 방지를 위해 text/plain을 사용할 수 있으나 GAS에서는 json도 처리가능
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        to_email: email,
-                        subject: `[(주)비에이텍] ${name}님, 문의하신 내역이 접수되었습니다.`,
-                        html_body: autoReply
-                    })
-                });
-            } else {
-                console.warn("GAS URL이 설정되지 않아 메일 자동 발송은 생략되었습니다. (초안은 생성됨)");
-            }
-
-            if (contactStatus) {
-                contactStatus.textContent = '✓ 문의가 성공적으로 접수되었으며, 답변 메일이 전송되었습니다!';
-                contactStatus.className = 'contact__status success';
-            }
-            contactForm.reset();
-        } catch (err) {
-            console.error('자동 답변 발송 오류:', err);
-            // 발송 실패해도 접수는 완료 처리
-            const currentInquiries = JSON.parse(localStorage.getItem('batech_inquiries') || '[]');
-            currentInquiries.push(newInquiry);
-            localStorage.setItem('batech_inquiries', JSON.stringify(currentInquiries));
-
-            if (contactStatus) {
-                contactStatus.textContent = '✓ 문의가 접수되었습니다. (시스템 오류로 메일 발송 지연)';
-                contactStatus.className = 'contact__status success';
-            }
-            contactForm.reset();
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '문의하기 <i class="ri-send-plane-line"></i>';
-            setTimeout(() => {
-                if (contactStatus) {
-                    contactStatus.textContent = '';
-                    contactStatus.className = 'contact__status';
-                }
-            }, 6000);
-        }
-    });
-}
-
 
