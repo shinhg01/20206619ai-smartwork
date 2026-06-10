@@ -1,8 +1,10 @@
 /*==================== AUTH STATE (MEMORY-BASED) ====================*/
 window._batechLoggedIn = window._batechLoggedIn || false;
 
-// ======= Gemini API 설정 =======
-// 프론트엔드에서 API 키를 직접 관리하지 않고 Netlify Function을 통해 통신합니다.
+// ======= Gemini API 설정 (Google Apps Script 백엔드) =======
+// gas_chatbot_script.js를 Google Apps Script에 배포한 후,
+// 발급받은 웹 앱 URL을 아래에 붙여넣으세요.
+const GAS_CHATBOT_URL = 'https://script.google.com/macros/s/AKfycbyqdp96IJDlHMRtxJXd6AQHP-mz01BehJYhTXGUGz_gGStRWMir1nbirkyK49f6DY3IKA/exec';
 
 // Global state
 let inquiries = [];
@@ -1272,29 +1274,30 @@ ${contextStr}
 직원 질문: ${query}`;
 
     try {
-        const res = await fetch('/.netlify/functions/gemini', {
+        // Content-Type을 지정하지 않아 단순 요청(simple request)으로 보내야
+        // GAS 웹 앱에서 CORS preflight(OPTIONS) 없이 정상 처리됩니다.
+        const res = await fetch(GAS_CHATBOT_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt: prompt })
         });
         const data = await res.json();
-        
+
         if (indicator.parentNode) {
             indicator.remove();
         }
 
-        if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-            addMessageBubble('ai', data.candidates[0].content.parts[0].text, citations);
+        if (data.reply) {
+            addMessageBubble('ai', data.reply, citations);
         } else {
-            console.error('Gemini Error Data:', data);
-            addMessageBubble('ai', 'AI 응답을 받지 못했습니다. API 키 오류 또는 할당량 초과일 수 있습니다.', []);
+            console.error('GAS Error Data:', data);
+            addMessageBubble('ai', 'AI 응답을 받지 못했습니다. GAS 설정 또는 API 키를 확인해 주세요.\n' + (data.error ? JSON.stringify(data.error) : ''), []);
         }
     } catch (err) {
         if (indicator.parentNode) {
             indicator.remove();
         }
         console.error('Fetch Error:', err);
-        addMessageBubble('ai', 'Gemini API 통신 실패: ' + err.message, []);
+        addMessageBubble('ai', 'GAS API 통신 실패: ' + err.message, []);
     }
 }
 
