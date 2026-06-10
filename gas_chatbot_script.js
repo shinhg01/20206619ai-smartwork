@@ -33,16 +33,27 @@ function doPost(e) {
     }
 
     var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" + apiKey;
+    var payload = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
 
-    var response = UrlFetchApp.fetch(url, {
-      method: "post",
-      contentType: "application/json",
-      payload: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-      muteHttpExceptions: true
-    });
+    var responseCode, responseText;
+    var maxRetries = 3;
 
-    var responseCode = response.getResponseCode();
-    var responseText = response.getContentText();
+    // 모델 일시 과부하(503)에 대비해 짧은 대기 후 재시도
+    for (var attempt = 0; attempt < maxRetries; attempt++) {
+      var response = UrlFetchApp.fetch(url, {
+        method: "post",
+        contentType: "application/json",
+        payload: payload,
+        muteHttpExceptions: true
+      });
+
+      responseCode = response.getResponseCode();
+      responseText = response.getContentText();
+
+      if (responseCode !== 503) break;
+
+      Utilities.sleep(1500 * (attempt + 1));
+    }
 
     var result;
     try {
