@@ -420,3 +420,110 @@ if (track) {
     }
 }
 
+/*==================== QUOTE ESTIMATOR (equipment.html) ====================*/
+const QUOTE_BASE_PRICES = {
+    multi_volute: { name: '다단볼루트펌프', price: 4500000 },
+    single_volute: { name: '편흡입볼루트펌프', price: 3200000 },
+    centrifugal: { name: '원심펌프', price: 2800000 },
+    booster: { name: '부스터펌프', price: 2200000 },
+    submersible: { name: '수중펌프', price: 1800000 },
+    sludge: { name: '슬러지펌프', price: 4800000 },
+    mono: { name: '일축나사식 모노펌프', price: 3800000 },
+    dosing: { name: '정량펌프', price: 1500000 }
+};
+
+const QUOTE_MATERIAL_MULTIPLIERS = {
+    cast_iron: { name: '주철 (FC)', multiplier: 1.0 },
+    sus304: { name: 'SUS304', multiplier: 1.15 },
+    sus316: { name: 'SUS316', multiplier: 1.35 }
+};
+
+(function setupQuoteEstimator() {
+    const calcBtn = document.getElementById('qe-calc-btn');
+    const resultBox = document.getElementById('qe-result');
+    if (!calcBtn || !resultBox) return;
+
+    calcBtn.addEventListener('click', () => {
+        const productKey = document.getElementById('qe-product').value;
+        const capacity = parseFloat(document.getElementById('qe-capacity').value);
+        const head = parseFloat(document.getElementById('qe-head').value);
+        const materialKey = document.getElementById('qe-material').value;
+        const qty = parseInt(document.getElementById('qe-qty').value, 10);
+
+        const product = QUOTE_BASE_PRICES[productKey];
+        const material = QUOTE_MATERIAL_MULTIPLIERS[materialKey];
+
+        if (!product || !material || !(capacity > 0) || !(head > 0) || !(qty > 0)) {
+            resultBox.classList.remove('active');
+            alert('토출량, 전양정, 수량을 올바르게 입력해 주세요.');
+            return;
+        }
+
+        const capacityFactor = Math.pow(capacity / 1, 0.65);
+        const headFactor = Math.pow(head / 20, 0.5);
+
+        let qtyDiscount = 1.0;
+        if (qty >= 10) qtyDiscount = 0.88;
+        else if (qty >= 5) qtyDiscount = 0.93;
+        else if (qty >= 2) qtyDiscount = 0.97;
+
+        const unitPrice = product.price * capacityFactor * headFactor * material.multiplier;
+        const totalPrice = unitPrice * qty * qtyDiscount;
+
+        // 1만원 단위로 반올림 후 ±10% 예상 범위 표시
+        const rounded = Math.round(totalPrice / 10000) * 10000;
+        const lowEnd = Math.round(rounded * 0.9 / 10000) * 10000;
+        const highEnd = Math.round(rounded * 1.1 / 10000) * 10000;
+
+        resultBox.innerHTML = `
+            <div class="quote-estimator__result-label">
+                ${product.name} · 토출량 ${capacity} m³/min · 전양정 ${head} m · ${material.name} · ${qty}대
+            </div>
+            <div class="quote-estimator__result-price">
+                ${lowEnd.toLocaleString('ko-KR')}원 ~ ${highEnd.toLocaleString('ko-KR')}원
+            </div>
+            <div class="quote-estimator__result-note">
+                * 위 금액은 입력하신 사양을 기준으로 한 예상 견적이며, 부가세 및 설치비는 별도입니다.<br>
+                정확한 견적서는 영업팀과의 상담을 통해 확인하실 수 있습니다.
+            </div>
+            <a href="contact.html" class="quote-estimator__result-cta">
+                <i class="ri-mail-send-line"></i> 정식 견적 문의하기
+            </a>
+        `;
+        resultBox.classList.add('active');
+    });
+})();
+
+/*==================== QUICK NAVIGATION (TOC) ====================*/
+(function setupQuickNav() {
+    const quickNavLinks = document.querySelectorAll('.quick-nav__link');
+    if (quickNavLinks.length === 0) return;
+
+    const targetSections = [];
+    quickNavLinks.forEach(link => {
+        const id = link.getAttribute('href').slice(1);
+        const section = document.getElementById(id);
+        if (section) targetSections.push({ id, section, link });
+    });
+
+    function setActiveQuickNavLink() {
+        const scrollY = window.pageYOffset;
+        let currentId = null;
+
+        targetSections.forEach(({ id, section }) => {
+            const sectionTop = section.offsetTop - 120;
+            const sectionHeight = section.offsetHeight;
+            if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
+                currentId = id;
+            }
+        });
+
+        targetSections.forEach(({ id, link }) => {
+            link.classList.toggle('active-link', id === currentId);
+        });
+    }
+
+    window.addEventListener('scroll', setActiveQuickNavLink);
+    setActiveQuickNavLink();
+})();
+

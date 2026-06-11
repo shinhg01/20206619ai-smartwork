@@ -1471,3 +1471,65 @@ body.dark-theme .btn-primary:hover {
     pointer-events: none;
     z-index: 1100;
 }
+
+/*==================== DOCUMENT FORMS (서류 양식) ====================*/
+.doc-form-card {
+    background: var(--container-color);
+    border: 1px solid var(--panel-border);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+}
+
+.doc-form-header {
+    margin-bottom: 1.25rem;
+}
+
+.doc-form-desc {
+    font-size: var(--small-font-size);
+    color: var(--text-color-light);
+    margin-top: 0.375rem;
+    line-height: 1.6;
+}
+
+.doc-form {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed var(--panel-border);
+}
+
+.doc-form select.contact__input,
+.doc-form input.contact__input {
+    cursor: pointer;
+}
+
+.doc-form-error {
+    margin-top: 1.25rem;
+    padding: 0.875rem 1rem;
+    border-radius: 0.5rem;
+    background: rgba(220, 53, 69, 0.08);
+    border: 1px solid rgba(220, 53, 69, 0.25);
+    color: #dc3545;
+    font-size: var(--small-font-size);
+    line-height: 1.5;
+}
+
+.doc-form-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.doc-form-actions .button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.doc-form-actions .button i.ri-loader-4-line {
+    animation: doc-spin 0.8s linear infinite;
+}
+
+@keyframes doc-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

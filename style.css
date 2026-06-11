@@ -168,6 +168,51 @@ button, input, textarea {
     letter-spacing: -0.01em;
 }
 
+/*==================== QUICK NAVIGATION (TOC) ====================*/
+.quick-nav {
+    position: sticky;
+    top: var(--header-height);
+    z-index: var(--z-fixed);
+    background-color: var(--body-color);
+    border-bottom: 1px solid rgba(125, 125, 125, .15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .04);
+}
+
+.quick-nav__container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.quick-nav__list {
+    display: flex;
+    gap: .5rem;
+    list-style: none;
+    padding: .75rem 0;
+    width: max-content;
+    min-width: 100%;
+}
+
+.quick-nav__link {
+    display: inline-block;
+    padding: .4rem 1rem;
+    border-radius: 2rem;
+    font-size: var(--small-font-size);
+    font-weight: var(--font-medium);
+    color: var(--text-color);
+    background-color: var(--container-color);
+    border: 1px solid rgba(125, 125, 125, .25);
+    white-space: nowrap;
+    transition: .3s;
+}
+
+.quick-nav__link:hover,
+.quick-nav__link.active-link {
+    background-color: var(--first-color);
+    color: #FFF;
+    border-color: var(--first-color);
+}
+
 /*==================== HEADER & NAV ====================*/
 .header {
     width: 100%;
@@ -625,6 +670,38 @@ body.dark-theme .active-link::after {
     background-color: #DDD;
     border-radius: 1rem;
     overflow: hidden;
+    position: relative;
+}
+
+.map-pin-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.map-pin-label span {
+    background-color: var(--first-color);
+    color: #FFF;
+    padding: .35rem .9rem;
+    border-radius: .5rem;
+    font-size: var(--small-font-size);
+    font-weight: var(--font-semi-bold);
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .25);
+    margin-bottom: .25rem;
+}
+
+.map-pin-label i {
+    font-size: 2.25rem;
+    line-height: 1;
+    color: var(--first-color);
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35));
 }
 
 .location__data {
@@ -1084,16 +1161,6 @@ body.dark-theme .active-link::after {
     position: relative;
 }
 
-/* Lines for the chart */
-.org__chart::before {
-    content: '';
-    width: 2px;
-    height: 1.5rem;
-    background-color: var(--first-color-light);
-    position: absolute;
-    top: calc(var(--h3-font-size) + 4rem);
-}
-
 .org__node-title {
     font-weight: var(--font-bold);
     display: block;
@@ -1142,6 +1209,93 @@ body.dark-theme .active-link::after {
         flex-direction: column;
         align-items: center;
         gap: 3rem;
+    }
+}
+
+/* Quote Estimator (Equipment) */
+.quote-estimator__box {
+    background-color: var(--container-color);
+    border-radius: .75rem;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.quote-estimator__desc {
+    font-size: var(--small-font-size);
+    color: var(--text-color-light);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.quote-estimator__actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+.quote-estimator__actions .button {
+    cursor: pointer;
+    border: none;
+    font-family: var(--body-font);
+    font-size: var(--normal-font-size);
+}
+
+.quote-estimator__result {
+    display: none;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: .75rem;
+    background: var(--gradient-water);
+    color: #FFF;
+    text-align: center;
+}
+
+.quote-estimator__result.active {
+    display: block;
+}
+
+.quote-estimator__result-label {
+    font-size: var(--small-font-size);
+    opacity: 0.85;
+    margin-bottom: 0.5rem;
+}
+
+.quote-estimator__result-price {
+    font-size: 2rem;
+    font-weight: var(--font-semi-bold);
+    letter-spacing: 0.5px;
+}
+
+.quote-estimator__result-note {
+    font-size: var(--smaller-font-size);
+    opacity: 0.85;
+    margin-top: 1rem;
+    line-height: 1.6;
+}
+
+.quote-estimator__result-cta {
+    display: inline-block;
+    margin-top: 1.25rem;
+    background-color: #FFF;
+    color: var(--first-color);
+    padding: .65rem 1.5rem;
+    border-radius: .5rem;
+    font-weight: var(--font-medium);
+    font-size: var(--small-font-size);
+    transition: .3s;
+}
+
+.quote-estimator__result-cta:hover {
+    background-color: rgba(255,255,255,0.85);
+}
+
+@media screen and (max-width: 767px) {
+    .quote-estimator__box {
+        padding: 1.5rem;
+    }
+
+    .quote-estimator__result-price {
+        font-size: 1.5rem;
     }
 }
 

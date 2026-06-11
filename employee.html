@@ -17,6 +17,12 @@
     <!-- EmailJS removed -->
     <!-- FullCalendar JS -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+    <!-- DOCX 양식 자동완성용 (PizZip + Docxtemplater) -->
+    <script src='https://cdn.jsdelivr.net/npm/pizzip@3.1.6/dist/pizzip.min.js'></script>
+    <script type="module">
+        import Docxtemplater from 'https://cdn.jsdelivr.net/npm/docxtemplater@3.47.0/+esm';
+        window.Docxtemplater = Docxtemplater;
+    </script>
 </head>
 <body class="employee-body">
 
@@ -100,6 +106,10 @@
                 <button class="portal-nav-btn" data-tab="chatbot">
                     <i class="ri-bubble-chart-line"></i>
                     <span>AI 지식 어시스턴트 (NotebookLM)</span>
+                </button>
+                <button class="portal-nav-btn" data-tab="documents">
+                    <i class="ri-file-text-line"></i>
+                    <span>서류 양식</span>
                 </button>
             </div>
         </div>
@@ -350,6 +360,153 @@
                     </div>
                 </div>
 
+                <!-- TAB 4: DOCUMENT FORMS (서류 양식 자동완성) -->
+                <div class="tab-pane" id="tab-documents">
+                    <div class="doc-form-card">
+                        <div class="doc-form-header">
+                            <h3 class="dash-card-title"><i class="ri-file-text-line"></i> 서류 자동 작성 및 다운로드</h3>
+                            <p class="doc-form-desc">필요한 서류 양식을 선택하고 항목을 입력한 뒤 다운로드 버튼을 누르면, 입력한 내용이 반영된 문서 파일(.docx)이 자동으로 저장됩니다.</p>
+                        </div>
+
+                        <div class="contact__content">
+                            <label for="doc-type-select" class="contact__label">서류 종류 선택</label>
+                            <select id="doc-type-select" class="contact__input">
+                                <option value="leave">휴가신청서</option>
+                                <option value="certificate">재직증명서</option>
+                                <option value="expense">지출정산신청서</option>
+                            </select>
+                        </div>
+
+                        <!-- 휴가신청서 -->
+                        <form id="doc-form-leave" class="doc-form contact__form" data-doc-type="leave" data-template="templates/휴가신청서_양식.docx" data-filename="휴가신청서">
+                            <div class="contact__inputs grid">
+                                <div class="contact__content">
+                                    <label class="contact__label">성명 *</label>
+                                    <input type="text" class="contact__input" name="이름" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">부서 *</label>
+                                    <input type="text" class="contact__input" name="부서" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">직위 *</label>
+                                    <input type="text" class="contact__input" name="직위" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">휴가 종류 *</label>
+                                    <select class="contact__input" name="휴가종류" required>
+                                        <option value="" disabled selected>선택해주세요</option>
+                                        <option value="연차">연차</option>
+                                        <option value="반차(오전)">반차(오전)</option>
+                                        <option value="반차(오후)">반차(오후)</option>
+                                        <option value="병가">병가</option>
+                                        <option value="경조사 휴가">경조사 휴가</option>
+                                    </select>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">시작일 *</label>
+                                    <input type="date" class="contact__input" name="시작일" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">종료일 *</label>
+                                    <input type="date" class="contact__input" name="종료일" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">일수 *</label>
+                                    <input type="number" class="contact__input" name="일수" min="0.5" step="0.5" required>
+                                </div>
+                            </div>
+                            <div class="contact__content">
+                                <label class="contact__label">사유 *</label>
+                                <textarea class="contact__input" name="사유" rows="4" required></textarea>
+                            </div>
+                        </form>
+
+                        <!-- 재직증명서 -->
+                        <form id="doc-form-certificate" class="doc-form contact__form" data-doc-type="certificate" data-template="templates/재직증명서_양식.docx" data-filename="재직증명서" style="display: none;">
+                            <div class="contact__inputs grid">
+                                <div class="contact__content">
+                                    <label class="contact__label">성명 *</label>
+                                    <input type="text" class="contact__input" name="이름" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">생년월일 *</label>
+                                    <input type="date" class="contact__input" name="생년월일" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">부서 *</label>
+                                    <input type="text" class="contact__input" name="부서" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">직위 *</label>
+                                    <input type="text" class="contact__input" name="직위" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">입사일 *</label>
+                                    <input type="date" class="contact__input" name="입사일" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">회사명 *</label>
+                                    <input type="text" class="contact__input" name="회사명" required value="(주) 비에이텍">
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">용도 *</label>
+                                    <select class="contact__input" name="용도" required>
+                                        <option value="" disabled selected>선택해주세요</option>
+                                        <option value="금융기관 제출용">금융기관</option>
+                                        <option value="임대차 계약용">임대차</option>
+                                        <option value="비자 발급용">비자</option>
+                                        <option value="관공서 제출용">관공서</option>
+                                        <option value="기타">기타</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- 지출정산신청서 -->
+                        <form id="doc-form-expense" class="doc-form contact__form" data-doc-type="expense" data-template="templates/지출정산신청서_양식.docx" data-filename="지출정산신청서" style="display: none;">
+                            <div class="contact__inputs grid">
+                                <div class="contact__content">
+                                    <label class="contact__label">성명 *</label>
+                                    <input type="text" class="contact__input" name="이름" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">부서 *</label>
+                                    <input type="text" class="contact__input" name="부서" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">직위 *</label>
+                                    <input type="text" class="contact__input" name="직위" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">신청일 *</label>
+                                    <input type="date" class="contact__input" name="신청일" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">사용 목적 *</label>
+                                    <input type="text" class="contact__input" name="사용목적" required>
+                                </div>
+                                <div class="contact__content">
+                                    <label class="contact__label">총 금액 (원) *</label>
+                                    <input type="text" class="contact__input" name="총금액" inputmode="numeric" placeholder="예: 150,000" required>
+                                </div>
+                            </div>
+                            <div class="contact__content">
+                                <label class="contact__label">비고</label>
+                                <textarea class="contact__input" name="비고" rows="3"></textarea>
+                            </div>
+                        </form>
+
+                        <div id="doc-form-error" class="doc-form-error" style="display: none;"></div>
+
+                        <div class="doc-form-actions">
+                            <button type="button" id="doc-download-btn" class="button button--small">
+                                <i class="ri-download-2-line"></i> 다운로드
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
         
@@ -560,6 +717,7 @@
             try { if (typeof setupSources         === 'function') setupSources(); }         catch(e){}
             try { if (typeof setupChatConsole     === 'function') setupChatConsole(); }     catch(e){}
             try { if (typeof setupFileUpload      === 'function') setupFileUpload(); }      catch(e){}
+            try { if (typeof setupDocumentForms   === 'function') setupDocumentForms(); }   catch(e){}
         } else {
             if (errorEl) errorEl.textContent = '인증번호를 입력해 주십시오.';
             var c = document.querySelector('.lock-container');

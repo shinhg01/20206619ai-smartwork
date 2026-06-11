@@ -41,6 +41,7 @@ function doLogin() {
         try { if (typeof setupSources         === 'function') setupSources(); }         catch(e){}
         try { if (typeof setupChatConsole     === 'function') setupChatConsole(); }     catch(e){}
         try { if (typeof setupFileUpload      === 'function') setupFileUpload(); }      catch(e){}
+        try { if (typeof setupDocumentForms   === 'function') setupDocumentForms(); }   catch(e){}
     } else {
         if (errorEl) errorEl.textContent = '인증번호를 입력해 주십시오.';
         if (container) {
@@ -235,6 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupSources();
         setupChatConsole();
         setupFileUpload();
+        if (typeof setupDocumentForms === 'function') setupDocumentForms();
     }
     // 로그아웃 버튼 연결
     var logoutBtn = document.getElementById('logout-btn');
@@ -1422,6 +1424,150 @@ function renderUploadedSourceCard(doc) {
     list.appendChild(card);
     
     // Auto greeting in chat panel notifying upload success
-    addMessageBubble('ai', `새로운 소스 문서 **[${doc.name}]**가 성공적으로 AI 지식베이스에 추가 및 분석되었습니다. 
+    addMessageBubble('ai', `새로운 소스 문서 **[${doc.name}]**가 성공적으로 AI 지식베이스에 추가 및 분석되었습니다.
 이제 이 파일의 내용에 대해 질문하실 수 있습니다.`);
+}
+
+/*==================== DOCUMENT FORMS (서류 양식 자동완성) ====================*/
+function setupDocumentForms() {
+    const typeSelect = document.getElementById('doc-type-select');
+    const downloadBtn = document.getElementById('doc-download-btn');
+    const errorBox = document.getElementById('doc-form-error');
+    const forms = document.querySelectorAll('.doc-form');
+
+    if (!typeSelect || !downloadBtn || forms.length === 0) return;
+
+    // 신청일(지출정산신청서) 기본값 = 오늘
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const expenseDateInput = document.querySelector('#doc-form-expense input[name="신청일"]');
+    if (expenseDateInput && !expenseDateInput.value) expenseDateInput.value = todayStr;
+
+    // 총금액 입력 시 천 단위 구분자 자동 표시
+    const amountInput = document.querySelector('#doc-form-expense input[name="총금액"]');
+    if (amountInput) {
+        amountInput.addEventListener('input', () => {
+            const digits = amountInput.value.replace(/[^0-9]/g, '');
+            amountInput.value = digits ? Number(digits).toLocaleString('ko-KR') : '';
+        });
+    }
+
+    function showForm(type) {
+        forms.forEach(f => {
+            f.style.display = (f.dataset.docType === type) ? '' : 'none';
+        });
+        if (errorBox) { errorBox.style.display = 'none'; errorBox.textContent = ''; }
+    }
+
+    typeSelect.addEventListener('change', () => showForm(typeSelect.value));
+    showForm(typeSelect.value);
+
+    downloadBtn.addEventListener('click', () => handleDocumentDownload(typeSelect, downloadBtn, errorBox));
+}
+
+function showDocFormError(errorBox, message) {
+    if (!errorBox) return;
+    errorBox.textContent = message;
+    errorBox.style.display = 'block';
+}
+
+async function handleDocumentDownload(typeSelect, downloadBtn, errorBox) {
+    if (errorBox) { errorBox.style.display = 'none'; errorBox.textContent = ''; }
+
+    const activeForm = document.querySelector(`.doc-form[data-doc-type="${typeSelect.value}"]`);
+    if (!activeForm) return;
+
+    // 필수 입력 항목 검사
+    if (!activeForm.checkValidity()) {
+        activeForm.reportValidity();
+        return;
+    }
+
+    const formData = new FormData(activeForm);
+    const data = {};
+    formData.forEach((value, key) => { data[key] = value; });
+
+    const todayKorean = formatDateKorean(new Date().toISOString().slice(0, 10));
+
+    if (typeSelect.value === 'leave') {
+        if (data['종료일'] < data['시작일']) {
+            showDocFormError(errorBox, '종료일은 시작일 이후여야 합니다.');
+            return;
+        }
+        data['작성일'] = todayKorean;
+        data['시작일'] = formatDateKorean(data['시작일']);
+        data['종료일'] = formatDateKorean(data['종료일']);
+    } else if (typeSelect.value === 'certificate') {
+        data['작성일'] = todayKorean;
+        data['생년월일'] = formatDateKorean(data['생년월일']);
+        data['입사일'] = formatDateKorean(data['입사일']);
+    } else if (typeSelect.value === 'expense') {
+        data['신청일'] = formatDateKorean(data['신청일']);
+        data['총금액'] = formatCurrency(data['총금액']);
+        if (!data['비고']) data['비고'] = '-';
+    }
+
+    const templatePath = activeForm.dataset.template;
+    const fileLabel = activeForm.dataset.filename;
+    const dateForFilename = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const downloadName = `${data['이름']}_${fileLabel}_${dateForFilename}.docx`;
+
+    const originalBtnHtml = downloadBtn.innerHTML;
+    downloadBtn.disabled = true;
+    downloadBtn.innerHTML = '<i class="ri-loader-4-line"></i> 생성 중...';
+
+    try {
+        const response = await fetch(templatePath);
+        if (!response.ok) throw new Error('양식 파일을 불러올 수 없습니다.');
+        const arrayBuffer = await response.arrayBuffer();
+
+        if (!window.PizZip || !window.Docxtemplater) {
+            throw new Error('문서 생성 라이브러리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        }
+
+        const zip = new window.PizZip(arrayBuffer);
+        const doc = new window.Docxtemplater(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+            delimiters: { start: '{{', end: '}}' }
+        });
+        doc.render(data);
+
+        const blob = doc.getZip().generate({
+            type: 'blob',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        });
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = downloadName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error('Document generation error:', err);
+        let detail = err.message || String(err);
+        if (err.properties && Array.isArray(err.properties.errors) && err.properties.errors.length > 0) {
+            detail = err.properties.errors.map(e => e.properties && e.properties.explanation ? e.properties.explanation : e.message).join(', ');
+        }
+        showDocFormError(errorBox, '문서 생성 중 오류가 발생했습니다: ' + detail);
+    } finally {
+        downloadBtn.disabled = false;
+        downloadBtn.innerHTML = originalBtnHtml;
+    }
+}
+
+function formatDateKorean(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    const [y, m, d] = parts;
+    return `${y}년 ${parseInt(m, 10)}월 ${parseInt(d, 10)}일`;
+}
+
+function formatCurrency(value) {
+    const digits = String(value).replace(/[^0-9]/g, '');
+    if (!digits) return '0원';
+    return Number(digits).toLocaleString('ko-KR') + '원';
 }

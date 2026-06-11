@@ -32,6 +32,7 @@
                     <li class="nav__item"><a href="equipment.html" class="nav__link active-link">장비소개</a></li>
                     <li class="nav__item"><a href="location.html" class="nav__link">오시는 길</a></li>
                     <li class="nav__item"><a href="contact.html" class="nav__link">고객문의</a></li>
+                    <li class="nav__item"><a href="employee.html" class="nav__link"><i class="ri-lock-line" style="font-size: 0.85rem; margin-right: 0.15rem; vertical-align: middle;"></i>임직원 포털</a></li>
                 </ul>
                 <div class="nav__close" id="nav-close">
                     <i class="ri-close-line"></i>
@@ -65,8 +66,20 @@
             </div>
         </section>
 
+        <!-- Quick Navigation -->
+        <nav class="quick-nav">
+            <div class="container quick-nav__container">
+                <ul class="quick-nav__list">
+                    <li><a href="#products" class="quick-nav__link">주요 제품</a></li>
+                    <li><a href="#process" class="quick-nav__link">제조 공정 및 기술력</a></li>
+                    <li><a href="#quote" class="quick-nav__link">예상 견적 계산기</a></li>
+                    <li><a href="#resource" class="quick-nav__link">자료실</a></li>
+                </ul>
+            </div>
+        </nav>
+
         <!-- Equipment Introduction -->
-        <section class="equipment section">
+        <section class="equipment section" id="products">
             <div class="container">
                 <h2 class="section__title">주요 제품</h2>
                 <span class="section__subtitle">Our Key Products</span>
@@ -110,7 +123,7 @@
 
 
         <!-- Manufacturing Process -->
-        <section class="process section">
+        <section class="process section" id="process">
             <div class="container">
                 <h2 class="section__title">제조 공정 및 기술력</h2>
                 <span class="section__subtitle">Our Manufacturing Excellence</span>
@@ -225,8 +238,69 @@
             </div>
         </section>
 
+        <!-- Quote Estimator -->
+        <section class="quote-estimator section" id="quote">
+            <div class="container">
+                <h2 class="section__title">예상 견적 계산기</h2>
+                <span class="section__subtitle">Quick Quote Estimator</span>
+
+                <div class="quote-estimator__box">
+                    <p class="quote-estimator__desc">
+                        제품 종류와 사양을 선택하시면 대략적인 예상 견적 금액을 바로 확인하실 수 있습니다.<br>
+                        ※ 본 결과는 참고용 예상 금액이며, 실제 견적은 현장 조건 및 옵션에 따라 달라질 수 있습니다.
+                    </p>
+
+                    <div class="contact__inputs grid">
+                        <div class="contact__content">
+                            <label for="qe-product" class="contact__label">제품 종류</label>
+                            <select id="qe-product" class="contact__input">
+                                <option value="multi_volute">다단볼루트펌프</option>
+                                <option value="single_volute">편흡입볼루트펌프</option>
+                                <option value="centrifugal">원심펌프</option>
+                                <option value="booster">부스터펌프</option>
+                                <option value="submersible">수중펌프</option>
+                                <option value="sludge">슬러지펌프</option>
+                                <option value="mono">일축나사식 모노펌프</option>
+                                <option value="dosing">정량펌프</option>
+                            </select>
+                        </div>
+                        <div class="contact__content">
+                            <label for="qe-capacity" class="contact__label">토출량 (m³/min)</label>
+                            <input type="number" id="qe-capacity" class="contact__input" min="0.1" step="0.1" value="1">
+                        </div>
+                        <div class="contact__content">
+                            <label for="qe-head" class="contact__label">전양정 (m)</label>
+                            <input type="number" id="qe-head" class="contact__input" min="1" step="1" value="20">
+                        </div>
+                        <div class="contact__content">
+                            <label for="qe-material" class="contact__label">재질</label>
+                            <select id="qe-material" class="contact__input">
+                                <option value="cast_iron">주철 (FC)</option>
+                                <option value="sus304">SUS304</option>
+                                <option value="sus316">SUS316</option>
+                            </select>
+                        </div>
+                        <div class="contact__content">
+                            <label for="qe-qty" class="contact__label">수량 (대)</label>
+                            <input type="number" id="qe-qty" class="contact__input" min="1" step="1" value="1">
+                        </div>
+                    </div>
+
+                    <div class="quote-estimator__actions">
+                        <button type="button" id="qe-calc-btn" class="button button--small">
+                            <i class="ri-calculator-line"></i> 예상 견적 확인
+                        </button>
+                    </div>
+
+                    <div id="qe-result" class="quote-estimator__result">
+                        <!-- JS로 채워짐 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Resource Center (Manuals) -->
-        <section class="resource section">
+        <section class="resource section" id="resource">
             <div class="container">
                 <h2 class="section__title">자료실</h2>
                 <span class="section__subtitle">Maintenance Manuals (PDF)</span>
