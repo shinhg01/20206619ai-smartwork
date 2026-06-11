@@ -6,6 +6,11 @@ window._batechLoggedIn = window._batechLoggedIn || false;
 // 발급받은 웹 앱 URL을 아래에 붙여넣으세요.
 const GAS_CHATBOT_URL = 'https://script.google.com/macros/s/AKfycbyqdp96IJDlHMRtxJXd6AQHP-mz01BehJYhTXGUGz_gGStRWMir1nbirkyK49f6DY3IKA/exec';
 
+// ======= 메일 발송 설정 (Google Apps Script 백엔드) =======
+// gas_script.js를 Google Apps Script에 배포한 후,
+// 발급받은 웹 앱 URL을 아래에 붙여넣으세요.
+const GAS_CONTACT_URL = 'https://script.google.com/macros/s/AKfycbxAZCEegKu3xGGdr03Jay6WzUeRzIU-RwiHDuUMRvWTuYmtKbbGOriQGwlWXMpQQho17w/exec';
+
 // Global state
 let inquiries = [];
 let notices = [];
@@ -767,17 +772,7 @@ function setupReplyTemplates(type, name) {
 }
 
 
-// ======= EmailJS 설정 =======
-// 1) https://www.emailjs.com 에서 무료 계정 생성
-// 2) Email Services → Gmail/Naver 등 연결 후 Service ID 복사
-// 3) Email Templates → 템플릿 생성 후 Template ID 복사
-//    템플릿 변수: {{to_email}}, {{to_name}}, {{reply_body}}, {{inquiry_type}}
-// 4) Account → Public Key 복사
-const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // ← 교체 필요
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // ← 교체 필요
-const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // ← 교체 필요
-
-function handleSaveReply() {
+async function handleSaveReply() {
     if (!activeModalInquiryId) return;
 
     const replyText = document.getElementById('modal-reply-text').value.trim();
@@ -795,31 +790,47 @@ function handleSaveReply() {
     btn.disabled = true;
     btn.innerHTML = '<i class="ri-loader-4-line"></i> 전송 중...';
 
-    const templateParams = {
-        to_email:     inq.email,
-        to_name:      inq.name,
-        reply_body:   replyText,
-        inquiry_type: inq.type
-    };
+    const htmlBody = `
+        <p>${inq.name}님, 안녕하십니까. (주)비에이텍입니다.</p>
+        <p>문의해 주신 내용에 대해 아래와 같이 답변 드립니다.</p>
+        <hr>
+        <p><strong>문의 유형:</strong> ${inq.type}</p>
+        <p><strong>문의 내용:</strong><br>${inq.message.replace(/\n/g, '<br>')}</p>
+        <hr>
+        <p><strong>답변 내용:</strong><br>${replyText.replace(/\n/g, '<br>')}</p>
+        <hr>
+        <p>감사합니다.<br>(주)비에이텍 고객지원팀 드림</p>
+    `;
 
-    emailjs.init(EMAILJS_PUBLIC_KEY);
-    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
-        .then(() => {
+    try {
+        const res = await fetch(GAS_CONTACT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                to_email: inq.email,
+                subject: '[(주)비에이텍] 문의에 대한 답변입니다.',
+                html_body: htmlBody
+            })
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
             inquiries[idx].reply = replyText;
             inquiries[idx].status = '처리완료';
             localStorage.setItem('batech_inquiries', JSON.stringify(inquiries));
             loadInquiriesData();
             alert(`${inq.name} 고객에게 답변 메일이 발송되었습니다.`);
             closeInquiryModal();
-        })
-        .catch((err) => {
-            console.error('EmailJS 오류:', err);
-            alert('메일 전송에 실패했습니다. EmailJS 설정을 확인해 주세요.\n오류: ' + JSON.stringify(err));
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="ri-mail-send-line"></i> 답변 저장 및 메일 전송';
-        });
+        } else {
+            console.error('GAS 메일 발송 오류:', data);
+            alert('메일 전송에 실패했습니다.\n오류: ' + (data.message || JSON.stringify(data)));
+        }
+    } catch (err) {
+        console.error('GAS API 통신 실패:', err);
+        alert('메일 전송에 실패했습니다. 네트워크 연결을 확인해 주세요.\n오류: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ri-mail-send-line"></i> 답변 저장 및 메일 전송';
+    }
 }
 
 // Sparkly Confetti Burst effect for modern UX wow
