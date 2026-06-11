@@ -527,3 +527,102 @@ const QUOTE_MATERIAL_MULTIPLIERS = {
     setActiveQuickNavLink();
 })();
 
+/*==================== CONTACT FORM (문의 접수) ====================*/
+// gas_script.js를 Google Apps Script에 웹 앱으로 배포한 후 발급받은 URL로 교체하세요.
+const GAS_CONTACT_URL = 'https://script.google.com/macros/s/AKfycbxAZCEegKu3xGGdr03Jay6WzUeRzIU-RwiHDuUMRvWTuYmtKbbGOriQGwlWXMpQQho17w/exec';
+
+const CONTACT_TYPE_LABELS = {
+    '견적문의': '견적 문의',
+    'AS접수': 'A/S 접수 및 기술 상담',
+    '카탈로그요청': '제품 카탈로그 요청',
+    '기타': '기타 문의'
+};
+
+(function setupContactForm() {
+    const form = document.getElementById('contact-form');
+    const statusBox = document.getElementById('contact-status');
+    const submitBtn = document.getElementById('contact-submit');
+    if (!form || !statusBox) return;
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const inquiryType = document.getElementById('inquiry_type').value;
+        const userName = document.getElementById('user_name').value.trim();
+        const userPhone = document.getElementById('user_phone').value.trim();
+        const userEmail = document.getElementById('user_email').value.trim();
+        const userMessage = document.getElementById('user_message').value.trim();
+
+        // 1) 문의 내용을 employee.html 포털에서 확인할 수 있도록 localStorage에 저장
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+        const newInquiry = {
+            id: 'inq_' + Date.now(),
+            type: inquiryType,
+            name: userName,
+            phone: userPhone,
+            email: userEmail,
+            message: userMessage,
+            date: dateStr,
+            status: '대기중',
+            reply: ''
+        };
+
+        let inquiries = [];
+        try {
+            inquiries = JSON.parse(localStorage.getItem('batech_inquiries')) || [];
+        } catch (err) {
+            inquiries = [];
+        }
+        inquiries.unshift(newInquiry);
+        localStorage.setItem('batech_inquiries', JSON.stringify(inquiries));
+
+        // 2) 화면에 접수 완료 메시지 표시
+        statusBox.textContent = '문의가 정상적으로 접수되었습니다. 빠른 시일 내에 답변 드리겠습니다.';
+        statusBox.classList.remove('error');
+        statusBox.classList.add('success');
+
+        if (submitBtn) submitBtn.disabled = true;
+
+        // 3) 입력한 이메일로 접수 확인 메일 발송 (Google Apps Script)
+        const typeLabel = CONTACT_TYPE_LABELS[inquiryType] || inquiryType;
+        const htmlBody = `
+            <p>${userName}님, 안녕하십니까. (주)비에이텍입니다.</p>
+            <p>아래와 같이 문의가 정상적으로 접수되었습니다. 담당자 확인 후 빠른 시일 내에 답변 드리겠습니다.</p>
+            <hr>
+            <p><strong>문의 유형:</strong> ${typeLabel}</p>
+            <p><strong>접수 일시:</strong> ${dateStr}</p>
+            <p><strong>연락처:</strong> ${userPhone}</p>
+            <p><strong>문의 내용:</strong><br>${userMessage.replace(/\n/g, '<br>')}</p>
+            <hr>
+            <p>감사합니다.<br>(주)비에이텍 고객지원팀 드림</p>
+        `;
+
+        if (GAS_CONTACT_URL && GAS_CONTACT_URL.indexOf('YOUR_') === -1) {
+            fetch(GAS_CONTACT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    to_email: userEmail,
+                    subject: '[(주)비에이텍] 문의가 접수되었습니다.',
+                    html_body: htmlBody
+                })
+            }).catch((err) => {
+                console.error('Contact confirmation email error:', err);
+            });
+        }
+
+        // 4) 폼 초기화
+        form.reset();
+        if (submitBtn) {
+            setTimeout(() => { submitBtn.disabled = false; }, 1500);
+        }
+    });
+})();
+
