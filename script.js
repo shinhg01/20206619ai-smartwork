@@ -193,7 +193,13 @@ window.onload = () => {
     if (dontShow !== today) {
         setTimeout(() => {
             const adModal = document.getElementById('ad-modal');
+            const adVideo = document.getElementById('ad-video');
             if(adModal) adModal.style.display = 'flex';
+            if(adVideo) {
+                // 자동재생 정책 통과를 위해 muted로 시작한 뒤, 모달 표시와 함께 음소거 해제
+                adVideo.muted = false;
+                adVideo.play().catch(e => console.log("Ad Video Play Error: ", e));
+            }
         }, 1500);
     }
 };
