@@ -84,19 +84,25 @@ themeButton.addEventListener('click', () => {
 /*==================== BGM CONTROL ====================*/
 const bgmBtn = document.getElementById('bgm-button')
 const bgmAudio = document.getElementById('site-bgm')
-let isPlaying = false
 
 if(bgmBtn && bgmAudio) {
-    bgmBtn.onclick = () => {
-        if(isPlaying) {
-            bgmAudio.pause()
-            bgmBtn.classList.replace('ri-music-fill', 'ri-music-2-line')
-        } else {
-            bgmAudio.play().catch(e => console.log("BGM Play Error: ", e))
-            bgmBtn.classList.replace('ri-music-2-line', 'ri-music-fill')
-        }
-        isPlaying = !isPlaying
+    const updateBgmIcon = () => {
+        bgmBtn.classList.toggle('ri-music-fill', !bgmAudio.paused)
+        bgmBtn.classList.toggle('ri-music-2-line', bgmAudio.paused)
     }
+
+    bgmBtn.onclick = () => {
+        if(bgmAudio.paused) {
+            bgmAudio.play().catch(e => console.log("BGM Play Error: ", e))
+        } else {
+            bgmAudio.pause()
+        }
+    }
+
+    // 오디오의 실제 재생 상태를 항상 아이콘에 반영 (재생 실패 시에도 아이콘이 어긋나지 않도록)
+    bgmAudio.addEventListener('play', updateBgmIcon)
+    bgmAudio.addEventListener('pause', updateBgmIcon)
+    updateBgmIcon()
 }
 
 /*==================== CHATBOT ====================*/
@@ -171,7 +177,13 @@ if(chatInput) {
 
 /*==================== AD MODAL ====================*/
 function closeAdModal() {
-    document.getElementById('ad-modal').style.display = 'none';
+    const adModal = document.getElementById('ad-modal');
+    const adVideo = document.getElementById('ad-video');
+    if (adModal) adModal.style.display = 'none';
+    if (adVideo) {
+        adVideo.pause();
+        adVideo.currentTime = 0;
+    }
 }
 
 window.onload = () => {
