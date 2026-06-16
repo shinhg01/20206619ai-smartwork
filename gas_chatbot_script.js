@@ -20,6 +20,31 @@ function doOptions(e) {
     .setMimeType(ContentService.MimeType.TEXT);
 }
 
+// GET 요청으로 사용 가능한 모델 목록 조회 (진단용)
+// 브라우저에서 GAS URL을 그냥 열면 이 함수가 실행됨
+function doGet(e) {
+  var apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  if (!apiKey) {
+    return ContentService.createTextOutput(JSON.stringify({ error: "GEMINI_API_KEY 미설정" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  try {
+    var resp = UrlFetchApp.fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models?key=" + apiKey,
+      { muteHttpExceptions: true }
+    );
+    var data = JSON.parse(resp.getContentText());
+    var names = (data.models || [])
+      .filter(function(m) { return m.supportedGenerationMethods && m.supportedGenerationMethods.indexOf('generateContent') !== -1; })
+      .map(function(m) { return m.name; });
+    return ContentService.createTextOutput(JSON.stringify({ available: names }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(e) {
+    return ContentService.createTextOutput(JSON.stringify({ error: e.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
@@ -39,12 +64,16 @@ function doPost(e) {
     }
 
     // 사용 가능한 모델을 순서대로 시도 (과부하 시 다음 모델로 자동 전환)
+    // ListModels API로 이 키에서 generateContent 지원 확인된 모델만 포함
     var models = [
       'gemini-2.5-flash-lite',
-      'gemini-2.5-flash',
+      'gemini-flash-lite-latest',
       'gemini-2.0-flash-lite',
       'gemini-2.0-flash',
-      'gemini-1.5-flash-8b'
+      'gemini-flash-latest',
+      'gemini-3.1-flash-lite',
+      'gemini-3-flash-preview',
+      'gemini-2.5-flash'
     ];
 
     var responseCode, responseText, result;

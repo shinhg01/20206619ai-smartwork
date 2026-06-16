@@ -560,6 +560,27 @@ const CONTACT_TYPE_LABELS = {
     '기타': '기타 문의'
 };
 
+/*==================== FAQ ACCORDION ====================*/
+(function setupFaq() {
+    document.querySelectorAll('.faq__question').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const item = btn.closest('.faq__item');
+            const isOpen = item.classList.contains('open');
+
+            // 다른 열린 항목 닫기
+            document.querySelectorAll('.faq__item.open').forEach(el => {
+                el.classList.remove('open');
+                el.querySelector('.faq__question').setAttribute('aria-expanded', 'false');
+            });
+
+            if (!isOpen) {
+                item.classList.add('open');
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        });
+    });
+})();
+
 (function setupContactForm() {
     const form = document.getElementById('contact-form');
     const statusBox = document.getElementById('contact-status');

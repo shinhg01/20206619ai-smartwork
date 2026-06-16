@@ -2141,6 +2141,105 @@ body.dark-theme select.contact__input {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 16L6 10H18L12 16Z'%3E%3C/path%3E%3C/svg%3E");
 }
 
+/*==================== FAQ ====================*/
+.faq__container {
+    max-width: 780px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.faq__item {
+    background-color: var(--container-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.faq__item:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.faq__question {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    font-size: var(--normal-font-size);
+    font-weight: var(--font-semi-bold);
+    color: var(--title-color);
+    transition: var(--transition);
+}
+
+.faq__question:hover {
+    color: var(--first-color);
+}
+
+.faq__item.open .faq__question {
+    color: var(--first-color);
+}
+
+.faq__icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    color: var(--first-color);
+    transition: transform var(--transition);
+}
+
+.faq__item.open .faq__icon {
+    transform: rotate(45deg);
+}
+
+.faq__answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .4s cubic-bezier(.4, 0, .2, 1);
+}
+
+.faq__item.open .faq__answer {
+    max-height: 500px;
+}
+
+.faq__answer p,
+.faq__answer ul {
+    padding: 0 1.5rem 1.25rem;
+    color: var(--text-color);
+    line-height: 1.8;
+    font-size: var(--small-font-size);
+}
+
+.faq__answer ul {
+    padding-left: 2.5rem;
+    list-style: disc;
+}
+
+.faq__answer ul li {
+    margin-bottom: .35rem;
+}
+
+.faq__answer p + ul {
+    padding-top: 0;
+    margin-top: -.5rem;
+}
+
+.faq__answer ul + p {
+    padding-top: .25rem;
+}
+
+.faq__link {
+    color: var(--first-color);
+    font-weight: var(--font-semi-bold);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 /*==================== LIGHTBOX ====================*/
 #lightbox {
     display: none;

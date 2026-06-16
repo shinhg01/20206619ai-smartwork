@@ -4,7 +4,7 @@ window._batechLoggedIn = window._batechLoggedIn || false;
 // ======= Gemini API 설정 (Google Apps Script 백엔드) =======
 // gas_chatbot_script.js를 Google Apps Script에 배포한 후,
 // 발급받은 웹 앱 URL을 아래에 붙여넣으세요.
-const GAS_CHATBOT_URL = 'https://script.google.com/macros/s/AKfycbzgQPnc4CSfJKtX3s61yPhStyZOWyoNpX8L3XUYAMEGJ7v1UUGP5ODRZeZJfCO-oEU-/exec';
+const GAS_CHATBOT_URL = 'https://script.google.com/macros/s/AKfycbz68-YNYXnuW1vgT2W1ttqT320CUjfnvVHCmqyuNNbbetyYroV4x6dtddxYEheP6CwS/exec';
 
 // ======= 메일 발송 설정 (Google Apps Script 백엔드) =======
 // gas_script.js를 Google Apps Script에 배포한 후,
@@ -14,6 +14,7 @@ const GAS_CONTACT_URL = 'https://script.google.com/macros/s/AKfycbxAZCEegKu3xGGd
 // Global state
 let inquiries = [];
 let notices = [];
+let announcements = [];
 
 let fcCalendar = null; // FullCalendar instance
 let isCalendarView = false;
@@ -47,6 +48,8 @@ function doLogin() {
         try { if (typeof setupChatConsole     === 'function') setupChatConsole(); }     catch(e){}
         try { if (typeof setupFileUpload      === 'function') setupFileUpload(); }      catch(e){}
         try { if (typeof setupDocumentForms   === 'function') setupDocumentForms(); }   catch(e){}
+        try { if (typeof loadAnnouncements    === 'function') loadAnnouncements(); }    catch(e){}
+        try { if (typeof setupNoticeBoard     === 'function') setupNoticeBoard(); }     catch(e){}
     } else {
         if (errorEl) errorEl.textContent = '인증번호를 입력해 주십시오.';
         if (container) {
@@ -242,6 +245,8 @@ document.addEventListener('DOMContentLoaded', function() {
         setupChatConsole();
         setupFileUpload();
         if (typeof setupDocumentForms === 'function') setupDocumentForms();
+        loadAnnouncements();
+        setupNoticeBoard();
     }
     // 로그아웃 버튼 연결
     var logoutBtn = document.getElementById('logout-btn');
@@ -313,6 +318,197 @@ function loadNoticesData() {
     notices.sort((a, b) => new Date(b.date) - new Date(a.date));
     renderNotices();
     updateCalendarEvents();
+}
+
+const defaultAnnouncements = [
+    {
+        id: "ann_1",
+        category: "긴급",
+        title: "[긴급] 7월 전체 안전 점검 실시 안내",
+        author: "대표이사 조세연",
+        date: "2026-06-14",
+        content: "7월 7일(화) 오전 9시부터 오후 5시까지 공장 전체 안전 점검을 실시합니다.\n점검 당일 생산 라인은 전면 가동 중단되오니, 각 부서는 작업 일정을 조율하여 주십시오.\n점검 결과에 따라 후속 개선 조치가 있을 수 있으며, 상세 일정은 추후 안내 드리겠습니다."
+    },
+    {
+        id: "ann_2",
+        category: "중요",
+        title: "2026년 하반기 나라장터 입찰 일정 공유",
+        author: "영업팀장",
+        date: "2026-06-10",
+        content: "조달청 나라장터 하반기 수의계약 및 입찰 예정 공고를 취합하였습니다.\n- 춘천시 상수도사업소 부스터펌프 교체 (7월 예정)\n- 양구군 농어촌공사 수중펌프 2대 (8월 예정)\n- 삼척시 하수처리장 슬러지펌프 (9월 예정)\n각 담당자는 사양서 및 자재 재고를 사전에 확인하여 주십시오."
+    },
+    {
+        id: "ann_3",
+        category: "중요",
+        title: "ISO 9001 내부 심사 일정 안내",
+        author: "품질보증부",
+        date: "2026-06-05",
+        content: "ISO 9001:2015 인증 유지를 위한 내부 품질 심사가 아래와 같이 진행됩니다.\n- 일시: 2026년 6월 25일(목) 14:00~17:00\n- 대상: 생산본부, 자재창고, 영업팀 서류 일체\n각 부서는 불일치 항목 사전 검토 및 시정 조치 기록을 준비하여 주시기 바랍니다."
+    },
+    {
+        id: "ann_4",
+        category: "일반",
+        title: "하계 휴가 일정 안내 (2026년)",
+        author: "관리팀",
+        date: "2026-06-01",
+        content: "2026년 하계 휴가 기간을 아래와 같이 안내드립니다.\n- 공장 휴무: 8월 10일(월) ~ 8월 14일(금)\n- 비상 연락망 유지: 영업팀 담당자 1인 당직 운영\n휴가 신청서는 7월 18일(금)까지 관리팀에 제출하여 주십시오.\n납품 일정이 있는 경우 사전에 협의 바랍니다."
+    },
+    {
+        id: "ann_5",
+        category: "일반",
+        title: "춘천시 납품 완료 및 고객 만족도 우수 평가 수령",
+        author: "생산본부",
+        date: "2026-05-28",
+        content: "춘천시 상수도사업소 발주 다단볼루트펌프 2대 납품 및 설치가 완료되었습니다.\n시운전 결과 이상 없이 정상 가동 중임을 확인하였으며, 담당 주무관님으로부터 '우수' 등급의 고객 만족도 평가를 수령하였습니다.\n관련 팀 모두 수고 많으셨습니다."
+    }
+];
+
+// category string → CSS class name for badge
+const annCategoryClass = { '긴급': 'urgent', '중요': 'important', '일반': 'general' };
+
+function loadAnnouncements() {
+    let stored = null;
+    try {
+        const data = localStorage.getItem('batech_announcements');
+        if (data) stored = JSON.parse(data);
+    } catch(e) {
+        // file:// 프로토콜 등에서 localStorage 차단 시 무시
+    }
+    if (stored && stored.length > 0) {
+        announcements = stored;
+    } else {
+        announcements = defaultAnnouncements.map(a => Object.assign({}, a));
+        try { localStorage.setItem('batech_announcements', JSON.stringify(announcements)); } catch(e) {}
+    }
+    announcements.sort((a, b) => new Date(b.date) - new Date(a.date));
+    renderAnnouncements('all');
+}
+
+function renderAnnouncements(category) {
+    const list = document.getElementById('ann-list');
+    if (!list) return;
+
+    const filtered = category === 'all'
+        ? announcements
+        : announcements.filter(a => a.category === category);
+
+    if (filtered.length === 0) {
+        list.innerHTML = '<p style="text-align:center;padding:2rem;color:var(--text-color-light);">등록된 공지사항이 없습니다.</p>';
+        return;
+    }
+
+    list.innerHTML = filtered.map(ann => {
+        const cssClass = annCategoryClass[ann.category] || 'general';
+        return `
+        <div class="ann-card" data-id="${ann.id}">
+            <div class="ann-card-header">
+                <span class="ann-badge ${cssClass}">${ann.category}</span>
+                <div class="ann-title-wrap">
+                    <div class="ann-title">${ann.title}</div>
+                    <div class="ann-meta"><span>${ann.author}</span><span>${ann.date}</span></div>
+                </div>
+                <div class="ann-header-right">
+                    <button class="ann-toggle-icon" aria-label="펼치기">
+                        <i class="ri-arrow-down-s-line"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="ann-body">
+                <p class="ann-content">${ann.content.replace(/\n/g, '<br>')}</p>
+                <div style="padding: 0 1.5rem 1rem; text-align: right;">
+                    <button class="ann-delete-btn" data-id="${ann.id}">삭제</button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    list.querySelectorAll('.ann-card-header').forEach(header => {
+        header.addEventListener('click', () => {
+            header.closest('.ann-card').classList.toggle('open');
+        });
+    });
+
+    list.querySelectorAll('.ann-delete-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+            e.stopPropagation();
+            const id = btn.getAttribute('data-id');
+            announcements = announcements.filter(a => a.id !== id);
+            try { localStorage.setItem('batech_announcements', JSON.stringify(announcements)); } catch(e) {}
+            const activeBtn = document.querySelector('.ann-filter-btn.active');
+            renderAnnouncements(activeBtn ? activeBtn.getAttribute('data-category') : 'all');
+        });
+    });
+}
+
+function setupNoticeBoard() {
+    // 공지사항 탭 클릭 시 항상 렌더링 보장
+    const noticesTabBtn = document.querySelector('.portal-nav-btn[data-tab="notices"]');
+    if (noticesTabBtn) {
+        noticesTabBtn.addEventListener('click', () => {
+            const activeFilter = document.querySelector('.ann-filter-btn.active');
+            renderAnnouncements(activeFilter ? activeFilter.getAttribute('data-category') : 'all');
+        });
+    }
+
+    const filterBtns = document.querySelectorAll('.ann-filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderAnnouncements(btn.getAttribute('data-category'));
+        });
+    });
+
+    const openModalBtn = document.getElementById('add-ann-btn');
+    const modal = document.getElementById('ann-modal');
+    const closeBtn = document.getElementById('ann-modal-close');
+    const cancelBtn = document.getElementById('ann-cancel-btn');
+    const saveBtn = document.getElementById('ann-save-btn');
+
+    if (openModalBtn && modal) {
+        openModalBtn.addEventListener('click', () => {
+            document.getElementById('ann-category-input').value = '일반';
+            document.getElementById('ann-author-input').value = '관리자';
+            document.getElementById('ann-title-input').value = '';
+            document.getElementById('ann-content-input').value = '';
+            modal.classList.add('active');
+        });
+    }
+
+    const closeModal = () => { if (modal) modal.classList.remove('active'); };
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+    if (modal) modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            const category = document.getElementById('ann-category-input').value.trim();
+            const author = document.getElementById('ann-author-input').value.trim();
+            const title = document.getElementById('ann-title-input').value.trim();
+            const content = document.getElementById('ann-content-input').value.trim();
+
+            if (!title || !content) {
+                alert('제목과 내용을 입력해 주세요.');
+                return;
+            }
+
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+            announcements.unshift({
+                id: 'ann_' + Date.now(),
+                category,
+                title,
+                author: author || '관리자',
+                date: dateStr,
+                content
+            });
+            try { localStorage.setItem('batech_announcements', JSON.stringify(announcements)); } catch(e) {}
+            closeModal();
+            const activeBtn = document.querySelector('.ann-filter-btn.active');
+            renderAnnouncements(activeBtn ? activeBtn.getAttribute('data-category') : 'all');
+        });
+    }
 }
 
 function updateCalendarEvents() {

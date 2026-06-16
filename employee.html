@@ -107,6 +107,10 @@
                     <i class="ri-bubble-chart-line"></i>
                     <span>AI 지식 어시스턴트 (NotebookLM)</span>
                 </button>
+                <button class="portal-nav-btn" data-tab="notices">
+                    <i class="ri-notification-3-line"></i>
+                    <span>공지사항</span>
+                </button>
                 <button class="portal-nav-btn" data-tab="documents">
                     <i class="ri-file-text-line"></i>
                     <span>서류 양식</span>
@@ -360,7 +364,23 @@
                     </div>
                 </div>
 
-                <!-- TAB 4: DOCUMENT FORMS (서류 양식 자동완성) -->
+                <!-- TAB 4: NOTICE BOARD (공지사항) -->
+                <div class="tab-pane" id="tab-notices">
+                    <div class="ann-toolbar">
+                        <div class="ann-filters" id="ann-filters">
+                            <button class="ann-filter-btn active" data-category="all">전체</button>
+                            <button class="ann-filter-btn" data-category="긴급">🔴 긴급</button>
+                            <button class="ann-filter-btn" data-category="중요">🟡 중요</button>
+                            <button class="ann-filter-btn" data-category="일반">🔵 일반</button>
+                        </div>
+                        <button class="action-btn" id="add-ann-btn" style="width: auto; padding: 0 1rem; border-color: var(--first-color); color: var(--first-color);">
+                            <i class="ri-edit-line"></i> 새 공지 작성
+                        </button>
+                    </div>
+                    <div id="ann-list" class="ann-list"></div>
+                </div>
+
+                <!-- TAB 5: DOCUMENT FORMS (서류 양식 자동완성) -->
                 <div class="tab-pane" id="tab-documents">
                     <div class="doc-form-card">
                         <div class="doc-form-header">
@@ -643,6 +663,44 @@
         </div>
     </div>
 
+    <!-- 5. POPUP MODAL: NEW ANNOUNCEMENT -->
+    <div class="modal-overlay" id="ann-modal">
+        <div class="portal-modal" style="max-width: 620px;">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="ri-notification-3-line"></i> 새 공지사항 작성</h3>
+                <button class="modal-close" id="ann-modal-close"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label class="contact__label">분류</label>
+                        <select id="ann-category-input" class="contact__input">
+                            <option value="일반">🔵 일반</option>
+                            <option value="중요">🟡 중요</option>
+                            <option value="긴급">🔴 긴급</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="contact__label">작성자</label>
+                        <input type="text" id="ann-author-input" class="contact__input" value="관리자" placeholder="작성자명">
+                    </div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label class="contact__label">제목 *</label>
+                    <input type="text" id="ann-title-input" class="contact__input" placeholder="공지 제목을 입력하세요" required>
+                </div>
+                <div>
+                    <label class="contact__label">내용 *</label>
+                    <textarea id="ann-content-input" class="contact__input" rows="7" placeholder="공지 내용을 자세히 입력하세요." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="ann-cancel-btn">취소</button>
+                <button class="btn-primary" id="ann-save-btn"><i class="ri-save-line"></i> 게시하기</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Minimal header/theme script (script.js는 충돌로 제외) -->
     <script>
     // 햄버거 메뉴
@@ -718,6 +776,8 @@
             try { if (typeof setupChatConsole     === 'function') setupChatConsole(); }     catch(e){}
             try { if (typeof setupFileUpload      === 'function') setupFileUpload(); }      catch(e){}
             try { if (typeof setupDocumentForms   === 'function') setupDocumentForms(); }   catch(e){}
+            try { if (typeof loadAnnouncements    === 'function') loadAnnouncements(); }    catch(e){}
+            try { if (typeof setupNoticeBoard     === 'function') setupNoticeBoard(); }     catch(e){}
         } else {
             if (errorEl) errorEl.textContent = '인증번호를 입력해 주십시오.';
             var c = document.querySelector('.lock-container');
