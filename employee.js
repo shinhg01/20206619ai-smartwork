@@ -4,7 +4,7 @@ window._batechLoggedIn = window._batechLoggedIn || false;
 // ======= Gemini API 설정 (Google Apps Script 백엔드) =======
 // gas_chatbot_script.js를 Google Apps Script에 배포한 후,
 // 발급받은 웹 앱 URL을 아래에 붙여넣으세요.
-const GAS_CHATBOT_URL = 'https://script.google.com/macros/s/AKfycbyqdp96IJDlHMRtxJXd6AQHP-mz01BehJYhTXGUGz_gGStRWMir1nbirkyK49f6DY3IKA/exec';
+const GAS_CHATBOT_URL = 'https://script.google.com/macros/s/AKfycbzgQPnc4CSfJKtX3s61yPhStyZOWyoNpX8L3XUYAMEGJ7v1UUGP5ODRZeZJfCO-oEU-/exec';
 
 // ======= 메일 발송 설정 (Google Apps Script 백엔드) =======
 // gas_script.js를 Google Apps Script에 배포한 후,
@@ -1287,30 +1287,42 @@ ${contextStr}
 직원 질문: ${query}`;
 
     try {
-        // Content-Type을 지정하지 않아 단순 요청(simple request)으로 보내야
-        // GAS 웹 앱에서 CORS preflight(OPTIONS) 없이 정상 처리됩니다.
         const res = await fetch(GAS_CHATBOT_URL, {
             method: 'POST',
             body: JSON.stringify({ prompt: prompt })
         });
-        const data = await res.json();
 
-        if (indicator.parentNode) {
-            indicator.remove();
+        // 본문을 먼저 텍스트로 읽어 JSON 파싱 실패 시 원본 내용을 확인할 수 있도록 함
+        const text = await res.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (jsonErr) {
+            throw new Error(`서버 응답 해석 실패 (HTTP ${res.status}): ${text.substring(0, 300)}`);
         }
+
+        if (indicator.parentNode) indicator.remove();
 
         if (data.reply) {
             addMessageBubble('ai', data.reply, citations);
+        } else if (data.busy) {
+            addMessageBubble('ai', 'AI 서비스에 일시적으로 요청이 집중되어 있습니다.\n잠시 후 다시 시도해 주세요. (Gemini API 과부하)', []);
         } else {
             console.error('GAS Error Data:', data);
-            addMessageBubble('ai', 'AI 응답을 받지 못했습니다. GAS 설정 또는 API 키를 확인해 주세요.\n' + (data.error ? JSON.stringify(data.error) : ''), []);
+            const errDetail = typeof data.error === 'string'
+                ? data.error
+                : (data.error?.message || data.error?.error?.message || JSON.stringify(data.error));
+            addMessageBubble('ai', `AI 응답 오류: ${errDetail || '알 수 없는 오류가 발생했습니다.'}`, []);
         }
     } catch (err) {
-        if (indicator.parentNode) {
-            indicator.remove();
-        }
-        console.error('Fetch Error:', err);
-        addMessageBubble('ai', 'GAS API 통신 실패: ' + err.message, []);
+        if (indicator.parentNode) indicator.remove();
+        console.error('AI 요청 오류:', err);
+
+        const isNetworkErr = err.message.includes('Failed to fetch') || err.message.includes('NetworkError');
+        const msg = isNetworkErr
+            ? '네트워크 연결을 확인해 주세요. (GAS 서버에 연결할 수 없습니다.)'
+            : `AI 어시스턴트 오류: ${err.message}`;
+        addMessageBubble('ai', msg, []);
     }
 }
 
